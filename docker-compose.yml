@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    container_name: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+  sql_server:
+    image: mcr.microsoft.com/mssql/server
+    container_name: sql_server
+    environment:
+        SA_PASSWORD: "6!yZpVlk"
+        ACCEPT_EULA: "Y"
+    ports:
+      - 1433:1433
+
+  publisher:
+    image: ${DOCKER_REGISTRY-}publisher
+    build:
+      context: .
+      dockerfile: Publisher/Dockerfile
+    container_name: publisher
+    depends_on:
+      - sql_server
+      - rabbitmq
+
+  consumer:
+    build: 
+      context: .
+      dockerfile: Consumer/Dockerfile
+    container_name: consumer
+    environment:
+      - RABBITMQ_ADDRESS=rabbitmq
+    depends_on:
+      - rabbitmq
